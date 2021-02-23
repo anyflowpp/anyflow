@@ -103,7 +103,8 @@
         "shared_mutex": "cpp",
         "span": "cpp",
         "strstream": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "bit": "cpp"
     },
     "files.autoGuessEncoding": true,
     "search.exclude": {"3rdPart":true,"build":true}

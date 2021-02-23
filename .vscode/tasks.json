@@ -1,2 +1,30 @@
 {
+    "tasks": [
+        {
+            "group": "build",
+            "command": "${workspaceFolder}/Gen-dbg.sh",
+            "label": "gen-dbg.sh",
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "group": "build",
+            "command": "${workspaceFolder}/Gen.sh",
+            "label": "gen.sh",
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "group": "build",
+            "label": "build.sh",
+            "command":"${workspaceFolder}/build.sh"
+        },
+        {
+            "group": "build",
+            "label": "build-dbg.sh",
+            "command":"${workspaceFolder}/build-dbg.sh"
+        }
+    ]
 }

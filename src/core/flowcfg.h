@@ -1,5 +1,5 @@
 #pragma once
-namespace anyflow {
+namespace anyflow{
 class flowcfg{
 public:
     typedef enum{
@@ -13,4 +13,4 @@ public:
     run_mode m_mode;
     run_mode m_cb_mode;
 };
-}
+}//anyflow

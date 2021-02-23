@@ -6,7 +6,8 @@
 //status  保存运行的状态
 //err_msg 保存错误信息 key为node类型,value为错误信息描述
 //cmd 
-namespace anyflow {
+
+namespace anyflow{
 class Node_Info{
 public:
     typedef enum{
@@ -22,4 +23,4 @@ public:
     std::map<std::string, std::string> cmd;   
 };
 typedef std::shared_ptr<Node_Info>  node_info_ptr;
-}
+} //namespace anyflow
