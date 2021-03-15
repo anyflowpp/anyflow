@@ -107,5 +107,9 @@
         "bit": "cpp"
     },
     "files.autoGuessEncoding": true,
-    "search.exclude": {"3rdPart":true,"build":true}
+    "search.exclude": {
+        "3rdPart": true,
+        "build": true
+    },
+    "cmake.configureOnOpen": false
 }
