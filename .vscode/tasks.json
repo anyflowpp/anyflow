@@ -10,6 +10,14 @@
         },
         {
             "group": "build",
+            "command": "${workspaceFolder}/Gen.bat",
+            "label": "gen.bat",
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "group": "build",
             "command": "${workspaceFolder}/Gen.sh",
             "label": "gen.sh",
             "problemMatcher": [
@@ -18,13 +26,21 @@
         },
         {
             "group": "build",
+            "label": "build.bat",
+            "command": "${workspaceFolder}/build.bat",
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "group": "build",
             "label": "build.sh",
-            "command":"${workspaceFolder}/build.sh"
+            "command": "${workspaceFolder}/build.sh"
         },
         {
             "group": "build",
             "label": "build-dbg.sh",
-            "command":"${workspaceFolder}/build-dbg.sh"
+            "command": "${workspaceFolder}/build-dbg.sh"
         }
     ]
 }

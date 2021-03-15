@@ -23,4 +23,11 @@ public:
     std::map<std::string, std::string> cmd;   
 };
 typedef std::shared_ptr<Node_Info>  node_info_ptr;
+
+typedef enum
+{
+    shared = 0, //线程共享
+    holdon = 1  //线程独占
+} node_thread_mode;
+
 } //namespace anyflow

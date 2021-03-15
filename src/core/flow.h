@@ -35,12 +35,6 @@ public:
             flow_data_ptr input;
             node_info_ptr info;
         };
-        typedef enum
-        {
-            shared = 0, //线程共享
-            holdon = 1  //线程独占
-        } thread_mode;
-    
     
         Node() : m_input_count(0), m_max_thread_number(1), m_bRelease_thread(false)
         {
@@ -72,7 +66,7 @@ public:
     
         virtual void setInput(flow_data_ptr input, node_info_ptr info)
         {
-            if (m_run_mode == thread_mode::shared){
+            if (m_run_mode == node_thread_mode::shared){
                 {
                     std::unique_lock<std::mutex> lock(this->m_mutex);
                     while (m_input_count > m_max_thread_number)
@@ -114,7 +108,7 @@ public:
         {
             this->next_node = next;
         }
-        void SetThreadRunMode(thread_mode mode)
+        void SetThreadRunMode(node_thread_mode mode)
         {
             m_run_mode = mode;
         }
@@ -233,7 +227,7 @@ public:
         }
         void ReleaseThread()
         {
-            if (m_run_mode == thread_mode::holdon)
+            if (m_run_mode == node_thread_mode::holdon)
             {
                 m_bRelease_thread = true;
                 {
@@ -271,7 +265,7 @@ public:
         std::vector<std::shared_ptr<std::thread>> m_node_Threads;
         bool m_bRelease_thread;
         std::list<input_struct> m_input_buf; //待处理消息队列
-        thread_mode m_run_mode;
+        node_thread_mode m_run_mode;
         int m_max_input_buf_number;
         int m_max_thread_number;
         std::mutex m_wait_mutex;
