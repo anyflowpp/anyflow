@@ -30,4 +30,17 @@ typedef enum
     holdon = 1  //œﬂ≥Ã∂¿’º
 } node_thread_mode;
 
+class node_exec{
+public:
+    inline node_exec(){}
+    inline virtual ~node_exec(){}
+	inline virtual std::shared_ptr<void> NodeExec(std::shared_ptr<void> input, void *ctx, node_info_ptr info) { return input; }
+	inline virtual void* CreateThreadContext() { return nullptr; }
+	inline virtual void* GetThreadContext() { return nullptr; }
+    inline virtual void DestroyThreadContext(void* ctx){}
+private:
+    void* m_ctx;
+};
+typedef std::shared_ptr<node_exec> node_exec_ptr;
+
 } //namespace anyflow

@@ -26,23 +26,26 @@ public:
     typedef RootNode_ptr(*GenFuncType_C)(const Json::Value&);
     typedef RootNode_ptr(GenNodeOutWay_C)(const Json::Value& name);
     typedef std::function<GenNodeOutWay_C> GenNodeOutWay_STD;
+
+
     class Node {
     public:
         flow_w_ptr m_ownedToFlow;
-        class input_struct
-        {
+        class input_struct {
         public:
             flow_data_ptr input;
             node_info_ptr info;
         };
     
-        Node() : m_input_count(0), m_max_thread_number(1), m_bRelease_thread(false)
-        {
-            m_cb_func = nullptr;
+        Node() :
+         m_input_count(0), m_max_thread_number(1),
+         m_bRelease_thread(false),m_run_mode(node_thread_mode::shared) {
         }
     
-        Node(callback_type func) : m_cb_func(func), m_input_count(0), m_max_thread_number(1), m_bRelease_thread(false)
-        {
+        Node(node_exec_ptr node_exec) : 
+         m_input_count(0), m_max_thread_number(1),
+         m_bRelease_thread(false),m_run_mode(node_thread_mode::shared) {
+             m_exec = node_exec;
         }
     
         virtual ~Node()
@@ -247,8 +250,16 @@ public:
             }
         }
     
-        virtual flow_data_ptr NodeProcess(flow_data_ptr input, void *ctx, node_info_ptr info) { throw std::logic_error("you need overwrite this function"); return nullptr; } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
-        virtual flow_data_ptr NodeProcessBack(flow_data_ptr input, node_info_ptr info) { return input; } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
+        virtual flow_data_ptr NodeProcess(flow_data_ptr input, void *ctx, node_info_ptr info) { 
+            if(!m_exec){
+                throw std::logic_error("you need overwrite this function");
+            }
+            return m_exec->NodeExec(input,ctx,info);
+        } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
+
+        virtual flow_data_ptr NodeProcessBack(flow_data_ptr input, node_info_ptr info) {
+            return input;
+        } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
 
         virtual void* CreateThreadContext() {return nullptr;}                                                                               //重写函数 建立对应的上下文关系
         virtual void DestroyThreadContext(void*) {}                                                                              //重写函数 销毁对应的上下文关系
@@ -272,6 +283,7 @@ public:
         std::condition_variable m_wait_thread;
         std::map<std::thread::id,void*>   m_thread_ctx;
         std::mutex                        m_mutex_thread_ctx;
+        node_exec_ptr m_exec;
     };
     class _NodeJsonParseInsertType{
     public:
