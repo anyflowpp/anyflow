@@ -34,7 +34,8 @@ set(CMAE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 
 include(FetchLibHelper.cmake)
 
-AddFetchLib(spdlog-1.5.0)
+# AddFetchLib(spdlog-1.5.0)
+AddFetchLib_GIT(https://github.com/gabime/spdlog.git spdlog)
 
 # src file config
 file(GLOB src src/*.cpp src/*.c src/core/*.cpp)
@@ -59,7 +60,8 @@ include(LibHelper.cmake)
 option(BuildTest "build test" ON)
 if (BuildTest)
     set(TestTool "TestTool")
-    AddFetchLib(googletest)
+    # AddFetchLib(googletest)
+    AddFetchLib_GIT(https://github.com/google/googletest.git googletest)
     FetchContent_GetProperties(googletest)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 

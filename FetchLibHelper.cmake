@@ -22,7 +22,7 @@ macro(AddFetchLib_GIT addr name)
     if(NOT ${name}_POPULATED)    # if 没有安装了第三方库 
         FetchContent_Populate(${name}) # 安装一下, 就是获取一下对应的变量
     endif()
-endmacro(AddFetchLib)
+endmacro()
 
 function(CopyLibFileToSource name src) 
     FetchContent_GetProperties(${name})
