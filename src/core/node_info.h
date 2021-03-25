@@ -2,10 +2,6 @@
 #include<map>
 #include<memory>
 #include<functional>
-//node_info主要是实现节点错误信息的保存
-//status  保存运行的状态
-//err_msg 保存错误信息 key为node类型,value为错误信息描述
-//cmd 
 
 namespace anyflow{
 class Node_Info{
@@ -32,15 +28,12 @@ typedef enum
 
 class node_exec{
 public:
-    inline node_exec(){}
-    inline virtual ~node_exec(){}
-	inline virtual std::shared_ptr<void> NodeExec(std::shared_ptr<void> input, void *ctx, node_info_ptr info) { return input; }
-	inline virtual void* CreateThreadContext() { return nullptr; }
-	inline virtual void* GetThreadContext() { return nullptr; }
-    inline virtual void DestroyThreadContext(void* ctx){}
-private:
-    void* m_ctx;
+	virtual std::shared_ptr<void> NodeExec(std::shared_ptr<void> input, void *ctx, node_info_ptr info)=0;
+    virtual bool Init(const Json::Value&)=0;
+	virtual void* CreateThreadContext() =0;
+	virtual void* GetThreadContext()=0; 
+    virtual void DestroyThreadContext(void* ctx)=0;
 };
 typedef std::shared_ptr<node_exec> node_exec_ptr;
 
-} //namespace anyflow
+}
