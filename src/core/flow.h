@@ -1,4 +1,5 @@
 #pragma once
+#include<iostream>
 #include<memory>
 #include"json/json.h"
 #include<list>
@@ -56,6 +57,44 @@ public:
         void setOwnedFlow(flow_ptr o_flow){
             this->m_ownedToFlow = o_flow;
     	}
+
+        void SetCfg(const Json::Value& jnode){
+            try{
+                if(!jnode.isMember("nodecfg")){
+                    std::cerr<<"use nodecfg as config root node"<<std::endl;
+                    return;
+                }
+                auto cfg = jnode["nodecfg"];
+                if(cfg.isMember("run_mode")){
+                    auto runmode = cfg["run_mode"];
+                    if(runmode.isString()){
+                        std::string mode = runmode.asString();
+                        if(mode=="shared"){
+                            this->m_run_mode = node_thread_mode::shared;
+                        }else if(mode=="holdon"){
+                            this->m_run_mode = node_thread_mode::holdon;
+                        }else{
+                            std::cerr<<"thread mode cfg error:you can just use shared or holdon"<<std::endl;
+                        }
+                    }
+                }else{
+                    std::cerr<<"use run_mode to config thread mode ,now you can config your node use thread as shared or holdon"<<std::endl;
+                }
+
+                if(cfg.isMember("max_thread_number")){
+                    auto max_threadnum = cfg["max_thread_number"];
+                    if(max_threadnum.isInt()){
+                        auto num = max_threadnum.asInt();
+                        this->m_max_input_buf_number=2*num;
+                        this->SetThreadNum(num);
+                    }
+                }else{
+                    std::cerr<<"use max_thread_number to config you total thread limite"<<std::endl;
+                }
+            }catch(const Json::Exception& e){
+                std::cerr<<e.what()<<std::endl;
+            }
+        }
     
         virtual void genInput(flow_data_ptr input, node_info_ptr info){
             if(!m_ownedToFlow.expired()){
@@ -72,7 +111,7 @@ public:
             if (m_run_mode == node_thread_mode::shared){
                 {
                     std::unique_lock<std::mutex> lock(this->m_mutex);
-                    while (m_input_count > m_max_thread_number)
+                    while (m_input_count >= m_max_thread_number)
                     {
                         m_cond.wait(lock);
                     }
@@ -82,16 +121,6 @@ public:
                 g.schedule(std::bind((void (Node::*)(flow_data_ptr input, node_info_ptr info)) & Node::thread_loop, this, input, info));
             }
             else{
-                //判断线程是否存在,不存在则创建
-                if (m_node_Threads.size()==0)
-                {
-                    auto &g = flow_thread_pool::GetInstance();
-                    for (int i = 0; i < this->m_max_thread_number; i++)
-                    {
-                        auto f = std::bind((void (Node::*)()) & Node::thread_loop, this);
-                        m_node_Threads.push_back(std::make_shared<std::thread>(f));
-                    }
-                }
                 std::unique_lock<std::mutex> locker(this->m_mutex);
                 while (this->m_input_buf.size() > m_max_input_buf_number){
                      this->m_cond.wait(locker);
@@ -129,9 +158,18 @@ public:
             m_max_input_buf_number = length;
         }
         //设置线程的最大长度
-        void SetThreadNum(int num)
-        {
+        void SetThreadNum(int num) {
             m_max_thread_number = num;
+            //判断线程是否存在,不存在则创建
+            if(m_run_mode==node_thread_mode::holdon){
+                if (m_node_Threads.size()<m_max_thread_number) {
+                    auto &g = flow_thread_pool::GetInstance();
+                    for (int i = 0; i < this->m_max_thread_number; i++) {
+                        auto f = std::bind((void (Node::*)()) & Node::thread_loop, this);
+                        m_node_Threads.push_back(std::make_shared<std::thread>(f));
+                    }
+                }
+            }
         }
     
     protected:
@@ -251,18 +289,27 @@ public:
         }
     
         virtual flow_data_ptr NodeProcess(flow_data_ptr input, void *ctx, node_info_ptr info) { 
-            if(!m_exec){
-                throw std::logic_error("you need overwrite this function");
+            if(m_exec){
+                return std::static_pointer_cast<T>(m_exec->NodeExec(input,ctx,info));
             }
-            return m_exec->NodeExec(input,ctx,info);
+            throw std::logic_error("you need overwrite this function");
         } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
 
         virtual flow_data_ptr NodeProcessBack(flow_data_ptr input, node_info_ptr info) {
             return input;
         } //ctx为传入参数,ctx为getThreadContext函数返回的上下文
 
-        virtual void* CreateThreadContext() {return nullptr;}                                                                               //重写函数 建立对应的上下文关系
-        virtual void DestroyThreadContext(void*) {}                                                                              //重写函数 销毁对应的上下文关系
+        virtual void* CreateThreadContext() {
+            if(m_exec){
+                return m_exec->CreateThreadContext();
+            }
+            return nullptr;
+        }                                                                               //重写函数 建立对应的上下文关系
+        virtual void DestroyThreadContext(void* ctx) {
+            if(m_exec){
+                m_exec->DestroyThreadContext(ctx);
+            }
+        }                                                                              //重写函数 销毁对应的上下文关系
         virtual void *GetThreadContext() { return nullptr; }                                                                //获取线程对应的上下文环境 重写此函实现代码的,主要针对线程独占的设计
         virtual void *GetThreadContext(std::thread::id) { return nullptr; }                                                                //获取线程对应的上下文环境 重写此函实现代码的,主要针对线程独占的设计
     
@@ -278,12 +325,13 @@ public:
         std::list<input_struct> m_input_buf; //待处理消息队列
         node_thread_mode m_run_mode;
         int m_max_input_buf_number;
-        int m_max_thread_number;
         std::mutex m_wait_mutex;
         std::condition_variable m_wait_thread;
         std::map<std::thread::id,void*>   m_thread_ctx;
         std::mutex                        m_mutex_thread_ctx;
         node_exec_ptr m_exec;
+    private:
+        int m_max_thread_number;
     };
     class _NodeJsonParseInsertType{
     public:
@@ -335,6 +383,13 @@ public:
             if(!node){
                 continue;
             }
+            if(node->m_exec){
+                bool init_r = node->m_exec->Init(jnode);
+                if(!init_r){
+                    continue;
+                }
+            }
+            node->SetCfg(jnode);
             if(m_nodes.size()!=0){
                 auto last = m_nodes.back();
                 last->setNext(node);
@@ -458,4 +513,4 @@ private:
 
 template<class T>
 std::map<std::string,void*> flow<T>::NodeJsonParse::nodetype_funcs;
-}//anyflow
+}
