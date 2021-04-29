@@ -1,5 +1,4 @@
-
-set(DEP_REPO http://www.lib_repo.com)
+set(DEP_REPO http://www.lib_repo.com) # 在hosts文件中配置 依赖库 的地址
 include(FetchContent)
 macro(AddFetchLib name)
     FetchContent_Declare(
